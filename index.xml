@@ -1,0 +1,32 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+      <title>Cycling and code on Cycling and code </title>
+      <generator uri="https://gohugo.io">Hugo</generator>
+    <link>https://jokarls.github.io/</link>
+    <language>en-us</language>
+    
+    
+    <updated>Mon, 06 Jul 2020 16:47:26 CEST</updated>
+    
+    <item>
+      <title>Continious integration for Connect IQ apps with Docker and GitHub Workflows</title>
+      <link>https://jokarls.github.io/post/donkeybrains/</link>
+      <pubDate>Mon, 06 Jul 2020 16:47:26 CEST</pubDate>
+      
+      <guid>https://jokarls.github.io/post/donkeybrains/</guid>
+      <description>In 2015 when Garmin launched the Connect IQ platform, I was eager to try it out. Together with a friend, I started an ambitious app project and I knew that we need a build server of some sort. The solution back then was an old laptop running Jenkins, triggering builds on pushes to our GitHub repository.
+Since then I&amp;rsquo;ve learned Docker and GitHub have released their Actions feature. So coming back to Connect IQ development, after a few years, those felt like good technologies to use when setting up a continuous integration pipeline.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://jokarls.github.io/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      
+      <guid>https://jokarls.github.io/about/</guid>
+      <description>About test test test</description>
+    </item>
+    
+  </channel>
+</rss>
+

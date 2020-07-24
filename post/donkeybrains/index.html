@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Continious integration for Connect IQ apps with Docker and GitHub Workflows - Cycling and code</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="keywords" content="">
+  <link rel="canonical" href="https://jokarls.github.io/post/donkeybrains/">
+
+  <link rel="stylesheet" type="text/css" href="https://jokarls.github.io/css/basscss.css">
+  <link rel="stylesheet" type="text/css" href="https://jokarls.github.io/css/main.css">
+
+  
+  
+
+  
+  
+
+  
+  
+
+</head>
+<body class="">
+
+<div class="site-wrap">
+  <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="https://jokarls.github.io" class="site-title">Cycling and code</a>
+      <nav class="site-nav right">
+      <a href="https://jokarls.github.io/about/">About</a>
+<a href="https://jokarls.github.io/tags/">Tags</a>
+</form>
+
+      </nav>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</header>
+
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="post-header mb2">
+        <h1 class="py2">Continious integration for Connect IQ apps with Docker and GitHub Workflows</h1>
+        <span class="post-meta">Jul 6, 2020  by jokarls </span><br>
+        
+      </div>
+
+      <article class="post-content">
+      <p>In 2015 when Garmin launched the Connect IQ platform, I was eager to try it out. Together with a friend, I started an ambitious app project and I knew that we need a build server of some sort. The solution back then was an old laptop running Jenkins, triggering builds on pushes to our GitHub repository.</p>
+<p>Since then I&rsquo;ve learned Docker and GitHub have released their Actions feature. So coming back to Connect IQ development, after a few years, those felt like good technologies to use when setting up a continuous integration pipeline.</p>
+<h2 id="creating-a-connect-iq-sdk-docker-image">Creating a Connect IQ SDK Docker image</h2>
+<p>I decided to base the image on the Alpine Linux base image, to keep it as slim as possible. The Connect IQ SDK is based on Java so for the tools to work Java needs to be present in the image too.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Docker" data-lang="Docker"><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> alpine:3.7</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ARG</span> VERSION<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>.1.9-2020-06-24-1cc9d3a70<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> apk --update add --no-cache openjdk8 wget unzip bash<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> mkdir /opt <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    cd /opt <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    wget -q https://developer.garmin.com/downloads/<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span>    connect-iq/sdks/connectiq-sdk-lin-<span style="color:#e6db74">${</span>VERSION<span style="color:#e6db74">}</span>.zip -O connect-iq.zip <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    unzip connect-iq.zip -d connect-iq <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    rm -f connect-iq.zip<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENV</span> PATH $PATH:/opt/connect-iq/bin<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">CMD</span> [<span style="color:#e6db74">&#34;monkeyc&#34;</span>, <span style="color:#e6db74">&#34;-v&#34;</span>]<span style="color:#960050;background-color:#1e0010">
+</span></code></pre></div><p>You can find the source <a href="https://github.com/jokarls/donkeybrains">here</a> and the final image is can be found on Docker Hub <a href="https://hub.docker.com/repository/docker/jokarls/donkeybrains">jokarls/donkeybrains</a></p>
+<h2 id="setting-up-a-github-ci-workflow">Setting up a GitHub CI Workflow</h2>
+<p>GitHub workflows are yaml based and the one I created is pretty straight forward. It contains the four steps: <strong>checkout</strong>, <strong>prepare key</strong>, <strong>build</strong> and <strong>store artifact</strong>.</p>
+<p>In the <strong>prepare key</strong> step I prepare the key that&rsquo;s used for signing the artifact in the build step. The key is base64 encoded and stored as a secret, so it doesn&rsquo;t have to be checked in with the source code.</p>
+<p>The <strong>build</strong> step is where I instruct the workflow to use the donkeybrain image, along with the key from the previous step, to build the source.</p>
+<p>In the final step, I use the predefined action <em>upload-artifact</em> to store the output from the build step. So that we can download it later.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#66d9ef">name</span>: CI
+
+<span style="color:#66d9ef">on</span>: [push, pull_request]
+
+<span style="color:#66d9ef">jobs</span>:
+  <span style="color:#66d9ef">build</span>:
+    <span style="color:#66d9ef">runs-on</span>: ubuntu-latest
+    <span style="color:#66d9ef">steps</span>:
+    <span style="color:#75715e"># Checkout source</span>
+    - <span style="color:#66d9ef">name</span>: Checkout
+      <span style="color:#66d9ef">uses</span>: actions/checkout@v2
+
+    <span style="color:#75715e"># Prepare developer key from base64 encoded secret</span>
+    - <span style="color:#66d9ef">name</span>: Prepare key
+      <span style="color:#66d9ef">env</span>:
+        <span style="color:#66d9ef">DEVELOPER_KEY</span>: ${{ secrets.DEVELOPER_KEY }}
+      <span style="color:#66d9ef">run</span>: echo $DEVELOPER_KEY | base64 -d &gt; key.der
+
+    <span style="color:#75715e"># Build source using Donkeybrains docker image</span>
+    - <span style="color:#66d9ef">name</span>: Build
+      <span style="color:#66d9ef">uses</span>: docker://jokarls/donkeybrains:latest
+      <span style="color:#66d9ef">with</span>:
+        <span style="color:#66d9ef">args</span>: monkeyc -d edge820 -o bin/app.prg -f monkey.jungle -y key.der
+
+    <span style="color:#75715e"># Store the artifact from previous step</span>
+    - <span style="color:#66d9ef">name</span>: Store artifact
+      <span style="color:#66d9ef">uses</span>: actions/upload-artifact@v1
+      <span style="color:#66d9ef">with</span>:
+        <span style="color:#66d9ef">name</span>: app
+        <span style="color:#66d9ef">path</span>: bin/app.prg
+</code></pre></div><p>To put everything together, I created a small sample project: <a href="https://github.com/jokarls/donkeybrains-ci-sample">donkeybrains-ci-sample</a></p>
+<p>And this is what it looks like, running on the simulator:</p>
+<p><img src="https://jokarls.github.io/post/donkeybrains/simulator.png" alt="running on simulator"></p>
+<p>We now have a working CI pipeline for Connect IQ apps yay!</p>
+
+      </article>
+
+       
+      <p class="post-meta">Tags:&nbsp;
+        
+            
+            <a href="https://jokarls.github.io/tags/docker">docker</a>
+        
+            ,&nbsp;
+            <a href="https://jokarls.github.io/tags/connect%20iq">connect iq</a>
+        
+            ,&nbsp;
+            <a href="https://jokarls.github.io/tags/garmin">garmin</a>
+        
+            ,&nbsp;
+            <a href="https://jokarls.github.io/tags/ci">ci</a>
+        
+            ,&nbsp;
+            <a href="https://jokarls.github.io/tags/donkeybrains">donkeybrains</a>
+        
+            ,&nbsp;
+            <a href="https://jokarls.github.io/tags/github">github</a>
+        
+      </p>
+       
+
+      
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "jokarls" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    </div>
+  </div>
+</div>
+    <footer class="footer">
+      <div class="p2 wrap">
+        <div class="measure mt1 center">
+      <nav class="social-icons icons">
+<a class="fa fa-rss rss" href="https://jokarls.github.io/index.xml"></a>
+
+<a class="fa fa-twitter twitter" href="https://twitter.com/jokarls"></a>
+
+
+<a class="fa fa-github github" href="https://github.com/jokarls"></a>
+
+
+</nav>
+
+          <small>
+            Copyright &#169; 2017<br>
+            Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
+          </small>
+        </div>
+      </div>
+    </footer>
+
+    
+    <script src="https://jokarls.github.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-172206777-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+
+</body>
+</html>
+

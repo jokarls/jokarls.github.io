@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on Cycling and code</title>
+    <link>https://jokarls.github.io/tags/</link>
+    <description>Recent content in Tags on Cycling and code</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 06 Jul 2020 16:47:26 +0200</lastBuildDate>
+    
+	<atom:link href="https://jokarls.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>ci</title>
+      <link>https://jokarls.github.io/tags/ci/</link>
+      <pubDate>Mon, 06 Jul 2020 16:47:26 +0200</pubDate>
+      
+      <guid>https://jokarls.github.io/tags/ci/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>connect iq</title>
+      <link>https://jokarls.github.io/tags/connect-iq/</link>
+      <pubDate>Mon, 06 Jul 2020 16:47:26 +0200</pubDate>
+      
+      <guid>https://jokarls.github.io/tags/connect-iq/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>docker</title>
+      <link>https://jokarls.github.io/tags/docker/</link>
+      <pubDate>Mon, 06 Jul 2020 16:47:26 +0200</pubDate>
+      
+      <guid>https://jokarls.github.io/tags/docker/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>donkeybrains</title>
+      <link>https://jokarls.github.io/tags/donkeybrains/</link>
+      <pubDate>Mon, 06 Jul 2020 16:47:26 +0200</pubDate>
+      
+      <guid>https://jokarls.github.io/tags/donkeybrains/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>garmin</title>
+      <link>https://jokarls.github.io/tags/garmin/</link>
+      <pubDate>Mon, 06 Jul 2020 16:47:26 +0200</pubDate>
+      
+      <guid>https://jokarls.github.io/tags/garmin/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>github</title>
+      <link>https://jokarls.github.io/tags/github/</link>
+      <pubDate>Mon, 06 Jul 2020 16:47:26 +0200</pubDate>
+      
+      <guid>https://jokarls.github.io/tags/github/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
