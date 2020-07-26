@@ -54,20 +54,25 @@
 <p>Since then I&rsquo;ve learned Docker and GitHub have released their Actions feature. So coming back to Connect IQ development, after a few years, those felt like good technologies to use when setting up a continuous integration pipeline.</p>
 <h2 id="creating-a-connect-iq-sdk-docker-image">Creating a Connect IQ SDK Docker image</h2>
 <p>I decided to base the image on the Alpine Linux base image, to keep it as slim as possible. The Connect IQ SDK is based on Java so for the tools to work Java needs to be present in the image too.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Docker" data-lang="Docker"><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> alpine:3.7</span><span style="color:#960050;background-color:#1e0010">
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Docker" data-lang="Docker"><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> alpine:3.7 AS download</span><span style="color:#960050;background-color:#1e0010">
 </span><span style="color:#960050;background-color:#1e0010">
 </span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ARG</span> VERSION<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>.1.9-2020-06-24-1cc9d3a70<span style="color:#960050;background-color:#1e0010">
 </span><span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> apk --update add --no-cache openjdk8 wget unzip bash<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> apk --update add --no-cache curl unzip<span style="color:#960050;background-color:#1e0010">
 </span><span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> mkdir /opt <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>    cd /opt <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>    wget -q https://developer.garmin.com/downloads/<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    connect-iq/sdks/connectiq-sdk-lin-<span style="color:#e6db74">${</span>VERSION<span style="color:#e6db74">}</span>.zip -O connect-iq.zip <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>    unzip connect-iq.zip -d connect-iq <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>    rm -f connect-iq.zip<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /download</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> curl -o connect-iq.zip https://developer.garmin.com/downloads/connect-iq/<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span>sdks/connectiq-sdk-lin-<span style="color:#e6db74">${</span>VERSION<span style="color:#e6db74">}</span>.zip <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    unzip connect-iq.zip<span style="color:#960050;background-color:#1e0010">
 </span><span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENV</span> PATH $PATH:/opt/connect-iq/bin<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> alpine:3.7</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> apk --update add --no-cache openjdk8 bash<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /connect-iq</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> --from<span style="color:#f92672">=</span>download download/bin bin<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENV</span> PATH $PATH:/connect-iq/bin<span style="color:#960050;background-color:#1e0010">
 </span><span style="color:#960050;background-color:#1e0010">
 </span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">CMD</span> [<span style="color:#e6db74">&#34;monkeyc&#34;</span>, <span style="color:#e6db74">&#34;-v&#34;</span>]<span style="color:#960050;background-color:#1e0010">
 </span></code></pre></div><p>You can find the source <a href="https://github.com/jokarls/donkeybrains">here</a> and the final image is can be found on Docker Hub <a href="https://hub.docker.com/repository/docker/jokarls/donkeybrains">jokarls/donkeybrains</a></p>
